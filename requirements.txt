@@ -1,0 +1,4 @@
+fiona
+scrapy
+shapely
+s3cmd
