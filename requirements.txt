@@ -2,3 +2,7 @@ fiona
 scrapy
 shapely
 s3cmd
+https://github.com/turicas/rows/archive/develop.zip
+requests
+requests-cache
+tqdm
