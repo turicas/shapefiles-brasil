@@ -9,12 +9,10 @@ STATES="AC AL AM AP BA CE DF ES GO MA MG MS MT PA PB PE PI PR RJ RN RO RR RS SC 
 mkdir -p "$DOWNLOAD_PATH" "$OUTPUT_PATH"
 
 function extract_shp() {
-	url=$1; shift
 	zip_filename=$1; shift
 	tolerance=$1; shift
 	output=$1; shift
 
-	wget -O "$zip_filename" -c -t 0 "$url"
 	CMD="python shp2geojson.py zip://$zip_filename"
 	if [ "$tolerance" != "full" ]; then
 		OPTS="--simplify --tolerance=$tolerance"
@@ -29,11 +27,12 @@ function download_extract_upload() {
 	url=$1; shift
 
 	zip_filename="$DOWNLOAD_PATH/${state}.zip"
+	wget -O "$zip_filename" -c -t 0 "$url"
 	for tolerance in $TOLERANCES; do
 		echo $state $tolerance
 		mkdir -p $OUTPUT_PATH/$tolerance
 		output="$OUTPUT_PATH/$tolerance/${state}.geojson"
-		extract_shp "$url" "$zip_filename" "$tolerance" "$output"
+		extract_shp "$zip_filename" "$tolerance" "$output"
 		s3cmd put "$output" s3://dataset/$DATASET/$tolerance/${state}.geojson
 		if [ "$tolerance" = "full" ]; then
 			output_path="$OUTPUT_PATH/$tolerance/${state}"
