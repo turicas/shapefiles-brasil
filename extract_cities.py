@@ -5,7 +5,6 @@ from pathlib import Path
 import rows
 from tqdm import tqdm
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("input_geojson")
