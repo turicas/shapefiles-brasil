@@ -36,7 +36,7 @@ function download_extract_upload() {
 		s3cmd put "$output" s3://dataset/$DATASET/$tolerance/${state}.geojson
 		if [ "$tolerance" = "full" ]; then
 			output_path="$OUTPUT_PATH/$tolerance/${state}"
-			time python extract_cities.py "$output" "$output_path"
+			time python extrai_subfetuare.py "$output" "$output_path"
 			s3cmd put ${output_path}/* "s3://dataset/$DATASET/$tolerance/${state}/"
 			rm -rf "$output_path"
 		fi

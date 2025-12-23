@@ -18,7 +18,11 @@ if __name__ == "__main__":
     with open(input_geojson) as fobj:
         data = json.load(fobj)
     for feature in tqdm(data["features"]):
-        name = feature["properties"]["NM_MUNICIP"]
+        props = feature["properties"]
+        if "NM_MUNICIP" in props:  # Ex: {'NM_MUNICIP': 'BRASILÉIA', 'CD_GEOCMU': '1200104'}
+            name = props["NM_MUNICIP"]
+        elif "NM_ESTADO" in props:  # Ex: {'NM_ESTADO': 'SERGIPE', 'NM_REGIAO': 'NORDESTE', 'CD_GEOCUF': '28'}
+            name = props["NM_ESTADO"]
         name_slug = rows.fields.slug(name, separator="-")
         filename = output_path / f"{name_slug}.geojson"
         with open(filename, mode="w") as fobj:
