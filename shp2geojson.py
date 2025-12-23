@@ -9,12 +9,19 @@ def convert_shp_to_geojson(input_filename, output_filename, simplify=False, tole
     input_filename = str(input_filename)
     if input_filename.lower().endswith(".zip") and not input_filename.lower().startswith("zip://"):
         input_filename = f"zip://{input_filename}"
-    shape_data = fiona.open(input_filename)
-    geojson = {"type": "FeatureCollection", "features": []}
-    for item in shape_data:
-        if simplify:
-            item["geometry"] = shape(item["geometry"]).simplify(tolerance).__geo_interface__
-        geojson["features"].append(item)
+
+    with fiona.open(input_filename) as shape_data:
+        geojson = {"type": "FeatureCollection", "features": []}
+        for item in shape_data:
+            item_dict = {
+                "type": "Feature",
+                "id": item.id,
+                "geometry": dict(item.geometry),
+                "properties": dict(item.properties)
+            }
+            if simplify:
+                item_dict["geometry"] = shape(item_dict["geometry"]).simplify(tolerance).__geo_interface__
+            geojson["features"].append(item_dict)
     with open(output_filename, mode="w") as fobj:
         for chunk in json.JSONEncoder().iterencode(geojson):
             fobj.write(chunk)
