@@ -4,4 +4,6 @@ requests
 requests-cache
 s3cmd
 shapely
+simplification
+topojson
 tqdm

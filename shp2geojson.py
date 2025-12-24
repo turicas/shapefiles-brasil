@@ -2,7 +2,7 @@ import argparse
 import json
 
 import fiona
-from shapely.geometry import shape
+import topojson as tp
 
 
 def convert_shp_to_geojson(input_filename, output_filename, simplify=False, tolerance=None):
@@ -17,11 +17,17 @@ def convert_shp_to_geojson(input_filename, output_filename, simplify=False, tole
                 "type": "Feature",
                 "id": item.id,
                 "geometry": dict(item.geometry),
-                "properties": dict(item.properties)
+                "properties": dict(item.properties),
             }
-            if simplify:
-                item_dict["geometry"] = shape(item_dict["geometry"]).simplify(tolerance).__geo_interface__
             geojson["features"].append(item_dict)
+
+    if simplify and tolerance is not None:
+        topo = tp.Topology(geojson, prequantize=False)
+        area_tolerance = tolerance * tolerance * 0.5  # The tolerance for topojson is different - it's the minimum area
+        topo = topo.toposimplify(epsilon=area_tolerance, simplify_algorithm="vw", simplify_with="simplification")
+        geojson_str = topo.to_geojson()
+        geojson = json.loads(geojson_str)
+
     with open(output_filename, mode="w") as fobj:
         for chunk in json.JSONEncoder().iterencode(geojson):
             fobj.write(chunk)
