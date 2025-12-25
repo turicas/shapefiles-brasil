@@ -3,7 +3,7 @@
 set -e
 DOWNLOAD_PATH="data/download"
 OUTPUT_PATH="data/output"
-DATASET="shapefiles-brasil"
+DATASET="shapefiles"
 TOLERANCES="full 0.001 0.005 0.01 0.05 0.1 0.2"
 STATES="AC AL AM AP BA CE DF ES GO MA MG MS MT PA PB PE PI PR RJ RN RO RR RS SC SE SP TO"
 mkdir -p "$DOWNLOAD_PATH" "$OUTPUT_PATH"
