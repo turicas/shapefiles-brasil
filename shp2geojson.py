@@ -1,9 +1,18 @@
 import argparse
+import csv
 import json
 from unicodedata import normalize
 
 import fiona
 import topojson as tp
+
+
+def nomes_municipios():
+    """Lê nomes de municípios com a grafia original (maiúsculas e minúsculas, com acentos)"""
+    with open("data/municipio.csv") as fobj:
+        return {int(row["codigo_ibge"]): row["nome"] for row in csv.DictReader(fobj)}
+
+municipios = None
 
 
 def normalize_text(text):
@@ -51,15 +60,23 @@ def round_coordinates(coords, precision=5):
 
 def converte_propriedades(props: dict):
     if "NM_MUNICIP" in props:
-        props["nome"] = props.pop("NM_MUNICIP")
         props["codigo"] = props.pop("CD_GEOCMU")
+        codigo = int(props["codigo"])
+        nome_original = props.pop("NM_MUNICIP")
+        if codigo in municipios:  # Usa grafia "original" da base do Censo
+            props["nome"] = municipios[codigo]
+        else:
+            # Também podem aparecer polígonos que não são municípios, como Lagoas dos Patos (código 4300001). Nesses
+            # casos, o nome não estará na base da população do IBGE e mantemos o nome vindo do shapefile. Mais
+            # detalhes: <https://github.com/ipeaGIT/geobr/issues/176#issuecomment-2329536064>
+            props["nome"] = nome_original
     elif "NM_ESTADO" in props:
         nome = props.pop("NM_ESTADO")
         nome_normalizado = normalize_text(nome)
         props["nome"] = UF_NOME_NORMALIZADO[nome_normalizado]
         props["sigla"] = UF_SIGLA[props["nome"]]
         props["codigo"] = props.pop("CD_GEOCUF")
-        props["regiao"] = props.pop("NM_REGIAO").title()
+        props["regiao"] = props.pop("NM_REGIAO")
     else:
         raise ValueError(f"Tipo de registro desconhecido - propriedades: {props}")
     expected_keys = {"nome", "codigo", "regiao", "sigla"}
@@ -71,6 +88,9 @@ def converte_propriedades(props: dict):
 
 
 def convert_shp_to_geojson(input_filename, output_filename, simplify=False, tolerance=None, precision=5):
+    global municipios
+
+    municipios = nomes_municipios()
     input_filename = str(input_filename)
     if input_filename.lower().endswith(".zip") and not input_filename.lower().startswith("zip://"):
         input_filename = f"zip://{input_filename}"
