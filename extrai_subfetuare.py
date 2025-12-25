@@ -23,4 +23,4 @@ if __name__ == "__main__":
         name_slug = rows.fields.slug(name, separator="-")
         filename = output_path / f"{name_slug}.geojson"
         with open(filename, mode="w") as fobj:
-            json.dump(feature, fobj)
+            json.dump(feature, fobj, separators=(",", ":"))

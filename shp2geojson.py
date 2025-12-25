@@ -89,7 +89,7 @@ def convert_shp_to_geojson(input_filename, output_filename, simplify=False, tole
         geojson = json.loads(geojson_str)
 
     with open(output_filename, mode="w") as fobj:
-        for chunk in json.JSONEncoder().iterencode(geojson):
+        for chunk in json.JSONEncoder(separators=(",", ":")).iterencode(geojson):
             fobj.write(chunk)
 
 
