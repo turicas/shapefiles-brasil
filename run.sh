@@ -4,7 +4,7 @@ set -e
 DOWNLOAD_PATH="data/download"
 OUTPUT_PATH="data/output"
 DATASET="shapefiles"
-TOLERANCES="full 0.001 0.005 0.01 0.05 0.1 0.2"
+TOLERANCES="original 0.001 0.005 0.01 0.05 0.1 0.2"
 STATES="AC AL AM AP BA CE DF ES GO MA MG MS MT PA PB PE PI PR RJ RN RO RR RS SC SE SP TO"
 mkdir -p "$DOWNLOAD_PATH" "$OUTPUT_PATH"
 
@@ -14,7 +14,7 @@ function extract_shp() {
   output=$1; shift
 
   CMD="python shp2geojson.py zip://$zip_filename"
-  if [ "$tolerance" != "full" ]; then
+  if [ "$tolerance" != "original" ]; then
     OPTS="--simplify --tolerance=$tolerance"
   else
     OPTS=""
@@ -38,7 +38,7 @@ function download_extract_upload() {
     if [[ $tolerance = $defaultTolerance ]]; then
       s3cmd put "$output" "s3://dataset/$DATASET/${state}.geojson"
     fi
-    if [ "$tolerance" = "full" ]; then
+    if [ "$tolerance" = "original" ]; then
       output_path="$OUTPUT_PATH/$tolerance/${state}"
       time python extrai_subfetuare.py "$output" "$output_path"
       s3cmd put ${output_path}/* "s3://dataset/$DATASET/$tolerance/${state}/"
