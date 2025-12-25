@@ -42,6 +42,13 @@ UF_SIGLA = {
 UF_NOME_NORMALIZADO = {normalize_text(key): key for key in UF_SIGLA.keys()}
 
 
+def round_coordinates(coords, precision=5):
+    if isinstance(coords[0], (int, float)):
+        return [round(c, precision) for c in coords]
+    else:
+        return [round_coordinates(c, precision) for c in coords]
+
+
 def converte_propriedades(props: dict):
     if "NM_MUNICIP" in props:
         props["nome"] = props.pop("NM_MUNICIP")
@@ -63,7 +70,7 @@ def converte_propriedades(props: dict):
     return props
 
 
-def convert_shp_to_geojson(input_filename, output_filename, simplify=False, tolerance=None):
+def convert_shp_to_geojson(input_filename, output_filename, simplify=False, tolerance=None, precision=5):
     input_filename = str(input_filename)
     if input_filename.lower().endswith(".zip") and not input_filename.lower().startswith("zip://"):
         input_filename = f"zip://{input_filename}"
@@ -73,10 +80,12 @@ def convert_shp_to_geojson(input_filename, output_filename, simplify=False, tole
         for item in shape_data:
             props = dict(item.properties)
             converte_propriedades(props)
+            geometry = dict(item.geometry)
+            geometry["coordinates"] = round_coordinates(geometry["coordinates"], precision)
             item_dict = {
                 "type": "Feature",
                 "id": item.id,
-                "geometry": dict(item.geometry),
+                "geometry": geometry,
                 "properties": props,
             }
             geojson["features"].append(item_dict)
@@ -87,6 +96,8 @@ def convert_shp_to_geojson(input_filename, output_filename, simplify=False, tole
         topo = topo.toposimplify(epsilon=area_tolerance, simplify_algorithm="vw", simplify_with="simplification")
         geojson_str = topo.to_geojson()
         geojson = json.loads(geojson_str)
+        for feature in geojson["features"]:
+            feature["geometry"]["coordinates"] = round_coordinates(feature["geometry"]["coordinates"], precision)
 
     with open(output_filename, mode="w") as fobj:
         for chunk in json.JSONEncoder(separators=(",", ":")).iterencode(geojson):
@@ -102,6 +113,12 @@ def main():
         default=None,
         help="Tolerance to be used in simplify process",
     )
+    parser.add_argument(
+        "--precision",
+        type=int,
+        default=5,
+        help="Number of decimal places for coordinates (default: 5)",
+    )
     parser.add_argument("input_filename", help="SHP file - can be a ZIP file (use: zip://filename.zip)")
     parser.add_argument("output_filename", help="GeoJSON filename")
     args = parser.parse_args()
@@ -111,6 +128,7 @@ def main():
         args.output_filename,
         simplify=args.simplify,
         tolerance=args.tolerance,
+        precision=args.precision,
     )
 
 
